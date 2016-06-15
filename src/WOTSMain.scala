@@ -6,10 +6,16 @@
   * Created by Administrator on 13/06/2016.
   */
 
-
 import java.io.{BufferedWriter, File, FileWriter}
 
 import scala.io.Source
+
+object FileNames extends Enumeration {
+  type FileNames = Value
+  val ORDER_FILE = "orders.csv"
+  val STAFF_FILE = "staff.csv"
+  val STOCK_FILE = "stock.csv"
+}
 
 object OrderDetails extends Enumeration {
   type OrderDetails = Value
@@ -21,11 +27,16 @@ object StaffDetails extends Enumeration {
   val STAFF_ID, NAME = Value
 }
 
+object StockDetails extends Enumeration {
+  type StockDetails = Value
+  val STOCK_ID, NAME, QUANTITY = Value
+}
+
 object WOTSMain {
   //Read in order data from csv and store in Array of Order
-  def readInOrders(fileName:String): Array[Order] = {
+  def readInOrders(): Array[Order] = {
     var orders:Array[Order] = Array.empty
-    val orderDataSource = Source.fromFile(fileName)
+    val orderDataSource = Source.fromFile(FileNames.ORDER_FILE)
     for (line <- orderDataSource.getLines) {
       val cols = line.split(",").map(_.trim) // Use comma to split each data value and trim excess spaces
       orders = orders :+ new Order(cols(0), cols(1), cols(2), cols(3), cols(4)) //append each order to array of orders
@@ -35,9 +46,9 @@ object WOTSMain {
   }
 
   //Read in staff data from csv and store in Array of Staff
-  def readInStaff(fileName:String): Array[Staff] = {
+  def readInStaff(): Array[Staff] = {
     var staff:Array[Staff] = Array.empty
-    val orderDataSource = Source.fromFile(fileName)
+    val orderDataSource = Source.fromFile(FileNames.STAFF_FILE)
     for (line <- orderDataSource.getLines) {
       val cols = line.split(",").map(_.trim) // Use comma to split each data value and trim excess spaces
       staff = staff :+ new Staff(cols(0), cols(1)) //append each member of staff to array of staff
@@ -46,9 +57,21 @@ object WOTSMain {
     staff
   }
 
+  //Read in stock data from csv and store in Array of Stock
+  def readInStock(): Array[Stock] = {
+    var stock:Array[Stock] = Array.empty
+    val orderDataSource = Source.fromFile(FileNames.STOCK_FILE)
+    for (line <- orderDataSource.getLines) {
+      val cols = line.split(",").map(_.trim) // Use comma to split each data value and trim excess spaces
+      stock = stock :+ new Stock(cols(0), cols(1), cols(2)) //append stock info
+    }
+    orderDataSource.close
+    stock
+  }
+
   //Write all order data to file
-  def writeAllOrders(fileName:String, orders:Array[Order]): Unit = {
-    val file = new File(fileName)
+  def writeAllOrders(orders:Array[Order]): Unit = {
+    val file = new File(FileNames.ORDER_FILE)
     val bw = new BufferedWriter(new FileWriter(file))
     var text = ""
     for(i <- orders) {
@@ -59,12 +82,24 @@ object WOTSMain {
   }
 
   //Write all staff data to file
-  def writeAllStaff(fileName:String, staff:Array[Staff]): Unit = {
-    val file = new File(fileName)
+  def writeAllStaff(staff:Array[Staff]): Unit = {
+    val file = new File(FileNames.STAFF_FILE)
     val bw = new BufferedWriter(new FileWriter(file))
     var text = ""
     for(i <- staff) {
       text = i.staffID + "," + i.name + "\n"
+      bw.write(text)
+    }
+    bw.close()
+  }
+
+  //Write all stock data to file
+  def writeAllStock(stock:Array[Stock]): Unit = {
+    val file = new File(FileNames.STOCK_FILE)
+    val bw = new BufferedWriter(new FileWriter(file))
+    var text = ""
+    for(i <- stock) {
+      text = i.stockID + "," + i.name + "," + i.quantity + "\n"
       bw.write(text)
     }
     bw.close()
@@ -95,7 +130,21 @@ object WOTSMain {
       }
     }
     if(!foundFlag)
-      println("Order not found.\n")
+      println("Staff not found.\n")
+  }
+
+  //Print info on one piece of stock
+  def printSingleStock(stock:Array[Stock], stockID:String): Unit = {
+    var foundFlag = false
+    println("Stock ID \t Name \t Quantity")
+    for (i <- stock ) {
+      if (stockID == i.stockID) {
+        foundFlag = true
+        println(i.stockID + "\t" + i.name + "\t" + i.quantity)
+      }
+    }
+    if(!foundFlag)
+      println("Stock not found.\n")
   }
 
   //Print all the orders stored in array
@@ -114,8 +163,16 @@ object WOTSMain {
     }
   }
 
+  //Print all stock
+  def printStock(stock:Array[Stock]): Unit = {
+    println("Stock ID \t Name \t Quantity")
+    for (i <- stock ) {
+      println(i.stockID + "\t" + i.name + "\t" + i.quantity)
+    }
+  }
+
   //Add a new order
-  def addAnOrder (fileName:String): Order = {
+  def addOrder(): Order = {
     //Requires id, name, location, status, staffID
     println("Please enter the details for the new order.")
     println("Order ID")
@@ -133,18 +190,33 @@ object WOTSMain {
   }
 
   //Add a new member of staff
-  def addStaff (fileName:String): Staff = {
+  def addStaff (): Staff = {
     //Requires id, name
     println("Please enter the details for the new staff member.")
     println("Staff ID")
     val staffID = getUserInput()
     println("Name")
     val name = getUserInput()
+
     new Staff(staffID, name)
   }
 
+  //Add new stock info
+  def addStock (): Stock = {
+    //Requires id, name
+    println("Please enter the details for the new stock.")
+    println("Stock ID")
+    val stockID = getUserInput()
+    println("Name")
+    val name = getUserInput()
+    println("Quantity")
+    val quantity = getUserInput()
+
+    new Stock(stockID, name, quantity)
+  }
+
   //Updates a specific order, found with orderID
-  def updateAnOrder (orders:Array[Order], orderID:String, updateType:OrderDetails.Value, userInput:String): Unit = {
+  def updateOrder(orders:Array[Order], orderID:String, updateType:OrderDetails.Value, userInput:String): Unit = {
     var foundFlag = false
     for(i <- orders ) {
       if (orderID == i.orderID) {
@@ -175,7 +247,7 @@ object WOTSMain {
   }
 
   //Updates a specific staff members details, found with staffID
-  def updateAStaff (staff:Array[Staff], staffID:String, updateType:StaffDetails.Value, userInput:String): Unit = {
+  def updateStaff(staff:Array[Staff], staffID:String, updateType:StaffDetails.Value, userInput:String): Unit = {
     var foundFlag = false
     for(i <- staff ) {
       if (staffID == i.staffID) {
@@ -193,52 +265,28 @@ object WOTSMain {
       println("Staff not found.\n")
   }
 
-  //  def readAllOrders(fileName:String) {
-  //    println("Order ID \t Name \t Location \t Status");
-  //    val orderDataSource = Source.fromFile(fileName);
-  //    for (line <- orderDataSource.getLines) {
-  //      val cols = line.split(",").map(_.trim);
-  //      println(s"${cols(0)} ${cols(1)} ${cols(2)} ${cols(3)}");
-  //    }
-  //    orderDataSource.close;
-  //  }
-
-//  def showOrderInformation(fileName:String, orderID:String) {
-//    println("Order ID \t Name \t Location \t Status \t Staff ID")
-//    val orderDataSource = Source.fromFile(fileName)
-//    var foundFlag = false
-//    for (line <- orderDataSource.getLines) {
-//      val cols = line.split(",").map(_.trim)
-//      if({cols(0)} == orderID) {
-//        println(s"${cols(0)} ${cols(1)} ${cols(2)} ${cols(3)} ${cols(4)}")
-//        foundFlag = true
-//      }
-//    }
-//    if (!foundFlag)
-//      println("No order found.")
-//    orderDataSource.close
-//  }
-
-//  def testUpdate(fileName:String, orderID:String) {
-//    println("Order ID \t Name \t Location \t Status \t Staff ID")
-//    val orderDataSource = Source.fromFile(fileName)
-//    var foundFlag = false
-//    for (line <- orderDataSource.getLines) {
-//      val cols = line.split(",").map(_.trim)
-//      if({cols(0)} == orderID) {
-//        println(s"${cols(0)} ${cols(1)} ${cols(2)} ${cols(3)}")
-//        cols(3) = "completed"
-//        println(s"${cols(0)} ${cols(1)} ${cols(2)} ${cols(3)} ${cols(4)}")
-//        //val writer = new CSVWriter(out);
-//        foundFlag = true
-//      }
-//    }
-//
-//    if (!foundFlag)
-//      println("No order found.")
-//
-//    orderDataSource.close
-//  }
+  //Updates a specific stock, found with stockID
+  def updateStock(stock:Array[Stock], stockID:String, updateType:StockDetails.Value, userInput:String): Unit = {
+    var foundFlag = false
+    for(i <- stock ) {
+      if (stockID == i.stockID) {
+        updateType match {
+          case StockDetails.NAME =>
+            //Update name
+            i.name = userInput
+            foundFlag = true
+          case StockDetails.QUANTITY =>
+            //Update stock
+            i.quantity = userInput
+            foundFlag = true
+          case _ =>
+            println("Invalid input")
+        }
+      }
+    }
+    if(!foundFlag)
+      println("Stock not found.\n")
+  }
 
   def getUserInput(): String = {
     println("Please enter a value: ")
@@ -248,12 +296,11 @@ object WOTSMain {
   def main(args: Array[String]) {
     var menuFlag = true
     var userInput1 = "0"
-    val orderFName = "orders.csv"
-    val staffFName = "staff.csv"
 
     //Read in and store data
-    var orders:Array[Order] = readInOrders(orderFName)
-    var staff:Array[Staff] = readInStaff(staffFName)
+    var orders:Array[Order] = readInOrders()
+    var staff:Array[Staff] = readInStaff()
+    var stock:Array[Stock] = readInStock()
 
     while(menuFlag){
       println("\nWelcome to the Warehouse Order Tracking System.")
@@ -262,14 +309,15 @@ object WOTSMain {
       println("1. View all orders")//done
       println("2. Find an order")//done
       println("3. Update an order")//done
-      println("4. Add an order")
+      println("4. Add an order")//done
       println("5. View all staff")//done
       println("6. Find a staff member")//done
       println("7. Update staff details")//done
-      println("8. Add staff")
-      println("9. View all stock")
-      println("10. Find specific stock")
-      println("11. Update stock")
+      println("8. Add staff")//done
+      println("9. View all stock")//done
+      println("10. Find specific stock")//done
+      println("11. Update stock")//done
+      println("12. Add stock")//done
 
       getUserInput() match {
         case "1" =>
@@ -296,25 +344,25 @@ object WOTSMain {
           getUserInput() match {
             case "1" =>
               //Name
-              updateAnOrder(orders, userInput1, OrderDetails.NAME, getUserInput())
+              updateOrder(orders, userInput1, OrderDetails.NAME, getUserInput())
             case "2" =>
               //Location
-              updateAnOrder(orders, userInput1, OrderDetails.LOCATION, getUserInput())
+              updateOrder(orders, userInput1, OrderDetails.LOCATION, getUserInput())
             case "3" =>
               //Status
-              updateAnOrder(orders, userInput1, OrderDetails.ORDER_STATUS, getUserInput())
+              updateOrder(orders, userInput1, OrderDetails.ORDER_STATUS, getUserInput())
             case "4" =>
               //Staff ID
-              updateAnOrder(orders, userInput1, OrderDetails.STAFF_ID, getUserInput())
+              updateOrder(orders, userInput1, OrderDetails.STAFF_ID, getUserInput())
             case _ =>
               //Invalid
               println("Invalid option.")
           }
-          writeAllOrders(orderFName, orders)
+          writeAllOrders(orders)
         case "4" =>
           //Add an order
-          orders = orders :+ addAnOrder(orderFName)
-          writeAllOrders(orderFName, orders)
+          orders = orders :+ addOrder()
+          writeAllOrders(orders)
         case "5" =>
           //View all staff
           println(" ")
@@ -336,22 +384,51 @@ object WOTSMain {
           getUserInput() match {
             case "1" =>
               //Name
-              updateAStaff(staff, userInput1, StaffDetails.NAME, getUserInput())
+              updateStaff(staff, userInput1, StaffDetails.NAME, getUserInput())
             case _ =>
               //Invalid input
               println("Invalid Input.")
           }
-          writeAllStaff(staffFName, staff)
+          writeAllStaff(staff)
         case "8" =>
           //add a new staff member
-          staff = staff :+ addStaff(staffFName)
-          writeAllStaff(staffFName, staff)
+          staff = staff :+ addStaff()
+          writeAllStaff(staff)
         case "9" =>
           //View all stock
+          println(" ")
+          printStock(stock)
         case "10" =>
           //Find specific stock
+          println("What is the stock ID? ")
+          printSingleStock(stock, getUserInput())
         case "11" =>
           //Update stock
+          println("What is the stock ID?")
+          userInput1 = getUserInput()
+          printSingleStock(stock, userInput1)
+
+          //Ask user which field they wish to update
+          println("What would you like to update?")
+          println("1. Name")
+          println("2. Quantity")
+
+          getUserInput() match {
+            case "1" =>
+              //Name
+              updateStock(stock, userInput1, StockDetails.NAME, getUserInput())
+            case "2" =>
+              //Quantity
+              updateStock(stock, userInput1, StockDetails.QUANTITY, getUserInput())
+            case _ =>
+              //Invalid input
+              println("Invalid Input.")
+          }
+          writeAllStock(stock)
+        case "12" =>
+          //Add new stock
+          stock = stock :+ addStock()
+          writeAllStock(stock)
         case "0" =>
           //Exit program
           menuFlag = false;
