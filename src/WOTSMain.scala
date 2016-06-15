@@ -114,6 +114,35 @@ object WOTSMain {
     }
   }
 
+  //Add a new order
+  def addAnOrder (fileName:String): Order = {
+    //Requires id, name, location, status, staffID
+    println("Please enter the details for the new order.")
+    println("Order ID")
+    val orderID = getUserInput()
+    println("Name")
+    val name = getUserInput()
+    println("Location")
+    val location = getUserInput()
+    println("Status")
+    val status = getUserInput()
+    println("staffID")
+    val staffID = getUserInput()
+
+    new Order(orderID, name, location, status, staffID)
+  }
+
+  //Add a new member of staff
+  def addStaff (fileName:String): Staff = {
+    //Requires id, name
+    println("Please enter the details for the new staff member.")
+    println("Staff ID")
+    val staffID = getUserInput()
+    println("Name")
+    val name = getUserInput()
+    new Staff(staffID, name)
+  }
+
   //Updates a specific order, found with orderID
   def updateAnOrder (orders:Array[Order], orderID:String, updateType:OrderDetails.Value, userInput:String): Unit = {
     var foundFlag = false
@@ -223,22 +252,24 @@ object WOTSMain {
     val staffFName = "staff.csv"
 
     //Read in and store data
-    val orders:Array[Order] = readInOrders(orderFName)
-    val staff:Array[Staff] = readInStaff(staffFName)
+    var orders:Array[Order] = readInOrders(orderFName)
+    var staff:Array[Staff] = readInStaff(staffFName)
 
     while(menuFlag){
       println("\nWelcome to the Warehouse Order Tracking System.")
       println("To navigate, simply enter the number of the service you wish to access.")
       println("Enter 0 to exit")
-      println("1. View all orders")
-      println("2. Find an order")
-      println("3. Update an order")
-      println("4. View all staff")
-      println("5. Find a staff member")
-      println("6. Update staff details")
-      println("7. View all stock")
-      println("8. Find specific stock")
-      println("9. Update stock")
+      println("1. View all orders")//done
+      println("2. Find an order")//done
+      println("3. Update an order")//done
+      println("4. Add an order")
+      println("5. View all staff")//done
+      println("6. Find a staff member")//done
+      println("7. Update staff details")//done
+      println("8. Add staff")
+      println("9. View all stock")
+      println("10. Find specific stock")
+      println("11. Update stock")
 
       getUserInput() match {
         case "1" =>
@@ -281,14 +312,18 @@ object WOTSMain {
           }
           writeAllOrders(orderFName, orders)
         case "4" =>
+          //Add an order
+          orders = orders :+ addAnOrder(orderFName)
+          writeAllOrders(orderFName, orders)
+        case "5" =>
           //View all staff
           println(" ")
           printStaff(staff)
-        case "5" =>
+        case "6" =>
           //Find a single staff member
           println("What is the staff ID? ")
           printSingleStaff(staff, getUserInput())
-        case "6" =>
+        case "7" =>
           //Update staff details
           println("What is the staff ID?")
           userInput1 = getUserInput()
@@ -307,11 +342,15 @@ object WOTSMain {
               println("Invalid Input.")
           }
           writeAllStaff(staffFName, staff)
-        case "7" =>
-          //View all stock
         case "8" =>
-          //Find specific stock
+          //add a new staff member
+          staff = staff :+ addStaff(staffFName)
+          writeAllStaff(staffFName, staff)
         case "9" =>
+          //View all stock
+        case "10" =>
+          //Find specific stock
+        case "11" =>
           //Update stock
         case "0" =>
           //Exit program
