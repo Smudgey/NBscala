@@ -16,6 +16,11 @@ object OrderDetails extends Enumeration {
   val ORDER_ID, NAME, LOCATION, ORDER_STATUS, STAFF_ID = Value
 }
 
+object StaffDetails extends Enumeration {
+  type StaffDetails = Value
+  val STAFF_ID, NAME = Value
+}
+
 object WOTSMain {
   //Read in order data from csv and store in Array of Order
   def readInOrders(fileName:String): Array[Order] = {
@@ -80,7 +85,7 @@ object WOTSMain {
   }
 
   //Print a single staff member details
-  def printSingleStaff(staff:Array[Order], staffID:String): Unit = {
+  def printSingleStaff(staff:Array[Staff], staffID:String): Unit = {
     var foundFlag = false
     println("Staff ID \t Name")
     for (i <- staff ) {
@@ -109,11 +114,11 @@ object WOTSMain {
     }
   }
 
+  //Updates a specific order, found with orderID
   def updateAnOrder (orders:Array[Order], orderID:String, updateType:OrderDetails.Value, userInput:String): Unit = {
     var foundFlag = false
     for(i <- orders ) {
       if (orderID == i.orderID) {
-        i.status = "completed"
         updateType match {
           case OrderDetails.NAME =>
             //Update name
@@ -138,6 +143,25 @@ object WOTSMain {
     }
     if(!foundFlag)
       println("Order not found.\n")
+  }
+
+  //Updates a specific staff members details, found with staffID
+  def updateAStaff (staff:Array[Staff], staffID:String, updateType:StaffDetails.Value, userInput:String): Unit = {
+    var foundFlag = false
+    for(i <- staff ) {
+      if (staffID == i.staffID) {
+        updateType match {
+          case StaffDetails.NAME =>
+            //Update name
+            i.name = userInput
+            foundFlag = true
+          case _ =>
+            println("Invalid input")
+        }
+      }
+    }
+    if(!foundFlag)
+      println("Staff not found.\n")
   }
 
   //  def readAllOrders(fileName:String) {
@@ -166,26 +190,26 @@ object WOTSMain {
 //    orderDataSource.close
 //  }
 
-  def testUpdate(fileName:String, orderID:String) {
-    println("Order ID \t Name \t Location \t Status \t Staff ID")
-    val orderDataSource = Source.fromFile(fileName)
-    var foundFlag = false
-    for (line <- orderDataSource.getLines) {
-      val cols = line.split(",").map(_.trim)
-      if({cols(0)} == orderID) {
-        println(s"${cols(0)} ${cols(1)} ${cols(2)} ${cols(3)}")
-        cols(3) = "completed"
-        println(s"${cols(0)} ${cols(1)} ${cols(2)} ${cols(3)} ${cols(4)}")
-        //val writer = new CSVWriter(out);
-        foundFlag = true
-      }
-    }
-
-    if (!foundFlag)
-      println("No order found.")
-
-    orderDataSource.close
-  }
+//  def testUpdate(fileName:String, orderID:String) {
+//    println("Order ID \t Name \t Location \t Status \t Staff ID")
+//    val orderDataSource = Source.fromFile(fileName)
+//    var foundFlag = false
+//    for (line <- orderDataSource.getLines) {
+//      val cols = line.split(",").map(_.trim)
+//      if({cols(0)} == orderID) {
+//        println(s"${cols(0)} ${cols(1)} ${cols(2)} ${cols(3)}")
+//        cols(3) = "completed"
+//        println(s"${cols(0)} ${cols(1)} ${cols(2)} ${cols(3)} ${cols(4)}")
+//        //val writer = new CSVWriter(out);
+//        foundFlag = true
+//      }
+//    }
+//
+//    if (!foundFlag)
+//      println("No order found.")
+//
+//    orderDataSource.close
+//  }
 
   def getUserInput(): String = {
     println("Please enter a value: ")
@@ -202,25 +226,31 @@ object WOTSMain {
     val orders:Array[Order] = readInOrders(orderFName)
     val staff:Array[Staff] = readInStaff(staffFName)
 
-    //updateAnOrder(orders, "003");
-    //writeAllOrders(orderFName, orders);
-
-    //testUpdate("orders.csv", "003");
-    //menuFlag = false;
-
     while(menuFlag){
+      println("\nWelcome to the Warehouse Order Tracking System.")
+      println("To navigate, simply enter the number of the service you wish to access.")
+      println("Enter 0 to exit")
       println("1. View all orders")
-      println("2. View an order")
+      println("2. Find an order")
       println("3. Update an order")
+      println("4. View all staff")
+      println("5. Find a staff member")
+      println("6. Update staff details")
+      println("7. View all stock")
+      println("8. Find specific stock")
+      println("9. Update stock")
 
       getUserInput() match {
-        case "1" => // View
+        case "1" =>
+          // View orders
           println(" ")
           printOrders(orders)
         case "2" =>
+          //Find an order
           println("What is the order ID? ")
           printSingleOrder(orders, getUserInput())
         case "3" =>
+          //Update an order
           println("What is the order ID? ")
           userInput1 = getUserInput()
           printSingleOrder(orders, userInput1)
@@ -250,7 +280,45 @@ object WOTSMain {
               println("Invalid option.")
           }
           writeAllOrders(orderFName, orders)
-        case _ => menuFlag = false
+        case "4" =>
+          //View all staff
+          println(" ")
+          printStaff(staff)
+        case "5" =>
+          //Find a single staff member
+          println("What is the staff ID? ")
+          printSingleStaff(staff, getUserInput())
+        case "6" =>
+          //Update staff details
+          println("What is the staff ID?")
+          userInput1 = getUserInput()
+          printSingleStaff(staff, userInput1)
+
+          //Ask user which field they wish to update
+          println("What would you like to update?")
+          println("1. Name")
+
+          getUserInput() match {
+            case "1" =>
+              //Name
+              updateAStaff(staff, userInput1, StaffDetails.NAME, getUserInput())
+            case _ =>
+              //Invalid input
+              println("Invalid Input.")
+          }
+          writeAllStaff(staffFName, staff)
+        case "7" =>
+          //View all stock
+        case "8" =>
+          //Find specific stock
+        case "9" =>
+          //Update stock
+        case "0" =>
+          //Exit program
+          menuFlag = false;
+        case _ =>
+          //Invalid input
+          println("Invalid input")
       }
     }
   }
