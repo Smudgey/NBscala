@@ -357,7 +357,7 @@ object WOTSMain {
 
   //perform a 'greedy' solution to the TSP, immediately choosing the next closest zone
   def greedySalesmanAlg(): Unit = {
-    
+
   }
 
   //perform a 'brute force' solution to the TSP, checking every possible combination until the optimal route is found
@@ -400,7 +400,7 @@ object WOTSMain {
           //Find an order
           println("What is the order ID? ")
           printSingleOrder(orders, getUserInput())
-        case "3" =>
+        case "3" => //TODO
           //Update an order
           println("What is the order ID? ")
           userInput1 = getUserInput()
