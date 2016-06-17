@@ -17,4 +17,9 @@ class Zone (zn:String, a:Double, b:Double, c:Double, d:Double, e:Double,
   var distToH:Double = h
   var distToI:Double = i
   var distToJ:Double = j
+  var excluded:Boolean = false
+
+  def setExclusion(f:Boolean) : Unit = {
+    excluded = f
+  }
 }

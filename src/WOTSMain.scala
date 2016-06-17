@@ -12,34 +12,61 @@ import scala.io.Source
 
 object FileNames extends Enumeration {
   type FileNames = Value
-  val ORDER_FILE = "orders.csv"
+  val ORDER_FILE = "orderForms.csv"
   val STAFF_FILE = "staff.csv"
   val STOCK_FILE = "stock.csv"
 }
 
-object OrderDetails extends Enumeration {
-  type OrderDetails = Value
-  val ORDER_ID, NAME, LOCATION, ORDER_STATUS, STAFF_ID = Value
+object OrderFormDetails extends Enumeration {
+  type OrderFormDetails = Value
+  val ORDER_ID, FIRST_NAME, SURNAME, LOCATION, ORDER_STATUS, STAFF_ID = Value
 }
 
 object StaffDetails extends Enumeration {
   type StaffDetails = Value
-  val STAFF_ID, NAME = Value
+  val STAFF_ID, FIRST_NAME, SURNAME = Value
 }
 
 object StockDetails extends Enumeration {
   type StockDetails = Value
-  val STOCK_ID, NAME, QUANTITY = Value
+  val STOCK_ID, NAME, QUANTITY, ZONE = Value
 }
 
 object WOTSMain {
   //Read in order data from csv and store in Array of Order
-  def readInOrders(): Array[Order] = {
-    var orders:Array[Order] = Array.empty
+  def readInOrders(): Array[OrderForm] = {
+    var orders:Array[OrderForm] = Array.empty
     val orderDataSource = Source.fromFile(FileNames.ORDER_FILE)
-    for (line <- orderDataSource.getLines) {
+    var flag = true
+    var newOrderForm:OrderForm = new OrderForm("", "", "", "", "", "", "")
+    for (line <- orderDataSource.getLines) { //grab each line in csv
+      //col(7) = order 1 id, col(8) = order 1 name, col(9) = order 1 quantity
       val cols = line.split(",").map(_.trim) // Use comma to split each data value and trim excess spaces
-      orders = orders :+ new Order(cols(0), cols(1), cols(2), cols(3), cols(4)) //append each order to array of orders
+      var ifEmptyCheck:Int = 10
+      var orderIDIndex = 7
+      var orderNameIndex = 8
+      var orderQuantityIndex = 9
+      flag = true
+
+      //create a new Order Form
+      newOrderForm = new OrderForm(cols(0), cols(1), cols(2), cols(3), cols(4), cols(5),
+        cols(6))
+
+      while(flag) { //while the orders have not all been added
+        //Add order to form
+        newOrderForm.addOrder(cols(orderIDIndex), cols(orderNameIndex), cols(orderQuantityIndex).toInt)
+
+        if (cols.size <= ifEmptyCheck) {
+          flag = !flag
+        } else {
+          orderIDIndex += 3
+          orderNameIndex += 3
+          orderQuantityIndex += 3
+          ifEmptyCheck +=3
+        }
+      }
+      //append each order to array of orders
+      orders = orders :+ newOrderForm
     }
     orderDataSource.close
     orders
@@ -51,7 +78,7 @@ object WOTSMain {
     val orderDataSource = Source.fromFile(FileNames.STAFF_FILE)
     for (line <- orderDataSource.getLines) {
       val cols = line.split(",").map(_.trim) // Use comma to split each data value and trim excess spaces
-      staff = staff :+ new Staff(cols(0), cols(1)) //append each member of staff to array of staff
+      staff = staff :+ new Staff(cols(0), cols(1), cols(2)) //append each member of staff to array of staff
     }
     orderDataSource.close
     staff
@@ -63,19 +90,32 @@ object WOTSMain {
     val orderDataSource = Source.fromFile(FileNames.STOCK_FILE)
     for (line <- orderDataSource.getLines) {
       val cols = line.split(",").map(_.trim) // Use comma to split each data value and trim excess spaces
-      stock = stock :+ new Stock(cols(0), cols(1), cols(2)) //append stock info
+      stock = stock :+ new Stock(cols(0), cols(1), cols(2), cols(3)) //append stock info
     }
     orderDataSource.close
     stock
   }
 
   //Write all order data to file
-  def writeAllOrders(orders:Array[Order]): Unit = {
+  def writeAllOrders(orders:Array[OrderForm]): Unit = {
     val file = new File(FileNames.ORDER_FILE)
     val bw = new BufferedWriter(new FileWriter(file))
     var text = ""
     for(i <- orders) {
-      text = i.orderID + "," + i.name + "," + i.location + "," + i.status + "," + i.staffID + "\n"
+      text = i.orderID + "," + i.customerID + "," + i.firstName + "," + i.surname + "," +
+        i.location + "," + i.status + "," + i.staffID
+      var currentIndex = 0
+      var flag = true
+
+      while (flag) { //while there is still orders to write
+        text += "," + i.getOrder(currentIndex)
+        currentIndex += 1
+
+        //check if any orders left
+        if ( i.orderCount == currentIndex)
+          flag = false
+      }
+      text += "\n"
       bw.write(text)
     }
     bw.close()
@@ -87,7 +127,7 @@ object WOTSMain {
     val bw = new BufferedWriter(new FileWriter(file))
     var text = ""
     for(i <- staff) {
-      text = i.staffID + "," + i.name + "\n"
+      text = i.staffID + "," + i.firstName + "," + i.surname + "\n"
       bw.write(text)
     }
     bw.close()
@@ -99,20 +139,22 @@ object WOTSMain {
     val bw = new BufferedWriter(new FileWriter(file))
     var text = ""
     for(i <- stock) {
-      text = i.stockID + "," + i.name + "," + i.quantity + "\n"
+      text = i.stockID + "," + i.name + "," + i.quantity + "," + i.zone + "\n"
       bw.write(text)
     }
     bw.close()
   }
 
-  //Print a single order
-  def printSingleOrder(orders:Array[Order], orderID:String): Unit = {
+  //Print a single order TODO
+  def printSingleOrder(orders:Array[OrderForm], orderID:String): Unit = {
     var foundFlag = false
-    println("Order ID \t Name \t Location \t Status \t Staff ID")
+    println("Order ID \t Name \t Location \t Status \t Staff ID \t Product ID, Product Name, Product Quantity")
     for (i <- orders ) {
       if (orderID == i.orderID) {
         foundFlag = true
-        println(i.orderID + "\t" + i.name + "\t" + i.location + "\t" + i.status + "\t" + i.staffID)
+        println(i.orderID + "\t" + i.firstName + " " + i.surname + "\t" + i.location + "\t" + i.status + "\t" + i.staffID)
+
+        //Loop each order and print
       }
     }
     if(!foundFlag)
@@ -126,7 +168,7 @@ object WOTSMain {
     for (i <- staff ) {
       if (staffID == i.staffID) {
         foundFlag = true
-        println(i.staffID + "\t" + i.name)
+        println(i.staffID + "\t" + i.firstName + " " + i.surname)
       }
     }
     if(!foundFlag)
@@ -148,10 +190,10 @@ object WOTSMain {
   }
 
   //Print all the orders stored in array
-  def printOrders(orders:Array[Order]): Unit = {
-    println("Order ID \t Name \t Location \t Status")
+  def printOrders(orders:Array[OrderForm]): Unit = {
+    println("Order ID \t Name \t Location \t Status \t Staff ID")
     for (i <- orders ) {
-      println(i.orderID + "\t" + i.name + "\t" + i.location + "\t" + i.status + "\t" + i.staffID)
+      println(i.orderID + "\t" + i.firstName + " " + i.surname + "\t" + i.location + "\t" + i.status + "\t" + i.staffID)
     }
   }
 
@@ -159,26 +201,30 @@ object WOTSMain {
   def printStaff(staff:Array[Staff]): Unit = {
     println("Staff ID \t Name")
     for (i <- staff ) {
-      println(i.staffID + "\t" + i.name)
+      println(i.staffID + "\t" + i.firstName + " " + i.surname)
     }
   }
 
   //Print all stock
   def printStock(stock:Array[Stock]): Unit = {
-    println("Stock ID \t Name \t Quantity")
+    println("Stock ID \t Name \t Quantity \t Zone")
     for (i <- stock ) {
-      println(i.stockID + "\t" + i.name + "\t" + i.quantity)
+      println(i.stockID + "\t" + i.name + "\t" + i.quantity + "\t" + i.zone)
     }
   }
 
-  //Add a new order
-  def addOrder(): Order = {
+  //Add a new order TODO
+  def addOrder(): OrderForm = {
     //Requires id, name, location, status, staffID
     println("Please enter the details for the new order.")
     println("Order ID")
     val orderID = getUserInput()
-    println("Name")
-    val name = getUserInput()
+    println("Customer ID")
+    val custID = getUserInput()
+    println("First Name")
+    val fname = getUserInput()
+    println("Surname")
+    val sname = getUserInput()
     println("Location")
     val location = getUserInput()
     println("Status")
@@ -186,7 +232,7 @@ object WOTSMain {
     println("staffID")
     val staffID = getUserInput()
 
-    new Order(orderID, name, location, status, staffID)
+    new OrderForm(orderID, custID, fname, sname, location, status, staffID)
   }
 
   //Add a new member of staff
@@ -195,10 +241,12 @@ object WOTSMain {
     println("Please enter the details for the new staff member.")
     println("Staff ID")
     val staffID = getUserInput()
-    println("Name")
-    val name = getUserInput()
+    println("First Name")
+    val fname = getUserInput()
+    println("Surname")
+    val sname = getUserInput()
 
-    new Staff(staffID, name)
+    new Staff(staffID, fname, sname)
   }
 
   //Add new stock info
@@ -211,29 +259,35 @@ object WOTSMain {
     val name = getUserInput()
     println("Quantity")
     val quantity = getUserInput()
+    println("Zone")
+    val zone = getUserInput()
 
-    new Stock(stockID, name, quantity)
+    new Stock(stockID, name, quantity, zone)
   }
 
-  //Updates a specific order, found with orderID
-  def updateOrder(orders:Array[Order], orderID:String, updateType:OrderDetails.Value, userInput:String): Unit = {
+  //Updates a specific order, found with orderID TODO
+  def updateOrder(orders:Array[OrderForm], orderID:String, updateType:OrderFormDetails.Value, userInput:String): Unit = {
     var foundFlag = false
     for(i <- orders ) {
       if (orderID == i.orderID) {
         updateType match {
-          case OrderDetails.NAME =>
-            //Update name
-            i.name = userInput
+          case OrderFormDetails.FIRST_NAME =>
+            //Update first name
+            i.firstName = userInput
             foundFlag = true
-          case OrderDetails.LOCATION =>
+          case OrderFormDetails.SURNAME =>
+            //Update surname
+            i.surname = userInput
+            foundFlag = true
+          case OrderFormDetails.LOCATION =>
             //Update location
             i.location = userInput
             foundFlag = true
-          case OrderDetails.ORDER_STATUS =>
+          case OrderFormDetails.ORDER_STATUS =>
             //Update order Status
             i.status = userInput
             foundFlag = true
-          case OrderDetails.STAFF_ID =>
+          case OrderFormDetails.STAFF_ID =>
             //Update ID of staff member working on the order
             i.staffID = userInput
             foundFlag = true
@@ -252,9 +306,13 @@ object WOTSMain {
     for(i <- staff ) {
       if (staffID == i.staffID) {
         updateType match {
-          case StaffDetails.NAME =>
-            //Update name
-            i.name = userInput
+          case StaffDetails.FIRST_NAME =>
+            //Update first name
+            i.firstName = userInput
+            foundFlag = true
+          case StaffDetails.SURNAME =>
+            //Update surname
+            i.surname = userInput
             foundFlag = true
           case _ =>
             println("Invalid input")
@@ -279,6 +337,10 @@ object WOTSMain {
             //Update stock
             i.quantity = userInput
             foundFlag = true
+          case StockDetails.ZONE =>
+            //Update zone
+            i.zone = userInput
+            foundFlag = true
           case _ =>
             println("Invalid input")
         }
@@ -293,12 +355,22 @@ object WOTSMain {
     scala.io.StdIn.readLine()
   }
 
+  //perform a 'greedy' solution to the TSP, immediately choosing the next closest zone
+  def greedySalesmanAlg(): Unit = {
+    
+  }
+
+  //perform a 'brute force' solution to the TSP, checking every possible combination until the optimal route is found
+  def bruteForceSalesmanAlg(): Unit = {
+
+  }
+
   def main(args: Array[String]) {
     var menuFlag = true
     var userInput1 = "0"
 
     //Read in and store data
-    var orders:Array[Order] = readInOrders()
+    var orders:Array[OrderForm] = readInOrders()
     var staff:Array[Staff] = readInStaff()
     var stock:Array[Stock] = readInStock()
 
@@ -336,24 +408,28 @@ object WOTSMain {
 
           //Ask user what they want to do
           println("What would you like to update?")
-          println("1. Name")
-          println("2. Location")
-          println("3. Status")
-          println("4. Staff ID")
+          println("1. First Name")
+          println("2. Surname")
+          println("3. Location")
+          println("4. Status")
+          println("5. Staff ID")
 
           getUserInput() match {
             case "1" =>
-              //Name
-              updateOrder(orders, userInput1, OrderDetails.NAME, getUserInput())
+              //First Name
+              updateOrder(orders, userInput1, OrderFormDetails.FIRST_NAME, getUserInput())
             case "2" =>
-              //Location
-              updateOrder(orders, userInput1, OrderDetails.LOCATION, getUserInput())
+              //Surname
+              updateOrder(orders, userInput1, OrderFormDetails.SURNAME, getUserInput())
             case "3" =>
-              //Status
-              updateOrder(orders, userInput1, OrderDetails.ORDER_STATUS, getUserInput())
+              //Location
+              updateOrder(orders, userInput1, OrderFormDetails.LOCATION, getUserInput())
             case "4" =>
+              //Status
+              updateOrder(orders, userInput1, OrderFormDetails.ORDER_STATUS, getUserInput())
+            case "5" =>
               //Staff ID
-              updateOrder(orders, userInput1, OrderDetails.STAFF_ID, getUserInput())
+              updateOrder(orders, userInput1, OrderFormDetails.STAFF_ID, getUserInput())
             case _ =>
               //Invalid
               println("Invalid option.")
@@ -379,12 +455,16 @@ object WOTSMain {
 
           //Ask user which field they wish to update
           println("What would you like to update?")
-          println("1. Name")
+          println("1. First Name")
+          println("2. Surname")
 
           getUserInput() match {
             case "1" =>
-              //Name
-              updateStaff(staff, userInput1, StaffDetails.NAME, getUserInput())
+              //First Name
+              updateStaff(staff, userInput1, StaffDetails.FIRST_NAME, getUserInput())
+            case "2" =>
+              //Surname
+              updateStaff(staff, userInput1, StaffDetails.SURNAME, getUserInput())
             case _ =>
               //Invalid input
               println("Invalid Input.")
@@ -412,6 +492,7 @@ object WOTSMain {
           println("What would you like to update?")
           println("1. Name")
           println("2. Quantity")
+          println("3. Zone")
 
           getUserInput() match {
             case "1" =>
@@ -420,6 +501,9 @@ object WOTSMain {
             case "2" =>
               //Quantity
               updateStock(stock, userInput1, StockDetails.QUANTITY, getUserInput())
+            case "3" =>
+              //Zone
+              updateStock(stock, userInput1, StockDetails.ZONE, getUserInput())
             case _ =>
               //Invalid input
               println("Invalid Input.")
