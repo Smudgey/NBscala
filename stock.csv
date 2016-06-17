@@ -1,11 +1,12 @@
-S0001,red gnome,10
-S0002,green gnome,6
-S0003,purple gnome,8
-S0004,eddard stark gnome,3
-S0005,jon snow gnome,0
-S0006,star design hat,3
-S0007,dinosaur design hat,6
-S0008,pikachu gnome,4
-S0009,red standard gnome hut,12
-S00010,pink umbrella,7
-S00011,small platform,4
+S0001,red gnome,10,A
+S0002,green gnome,6,B
+S0003,purple gnome,8,C
+S0004,eddard stark gnome,3,D
+S0005,jon snow gnome,0,E
+S0006,star design hat,3,F
+S0007,dinosaur design hat,6,G
+S0008,pikachu gnome,3,H
+S0009,red standard gnome hut,12,I
+S00010,pink umbrella,7,J
+S00011,small platform,4,C
+S00012,wrestling ring,3,B
