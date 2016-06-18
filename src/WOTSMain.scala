@@ -2,10 +2,6 @@
   * Created by Luke on 15/06/2016.
   */
 
-/**
-  * Created by Administrator on 13/06/2016.
-  */
-
 import java.io.{BufferedWriter, File, FileWriter}
 
 import scala.io.Source
@@ -19,7 +15,7 @@ object FileNames extends Enumeration {
 
 object OrderFormDetails extends Enumeration {
   type OrderFormDetails = Value
-  val ORDER_ID, FIRST_NAME, SURNAME, LOCATION, ORDER_STATUS, STAFF_ID = Value
+  val ORDER_ID, FIRST_NAME, SURNAME, LOCATION, ORDER_STATUS, STAFF_ID, ORDER = Value
 }
 
 object StaffDetails extends Enumeration {
@@ -145,16 +141,25 @@ object WOTSMain {
     bw.close()
   }
 
-  //Print a single order TODO
+  //Print a single order
   def printSingleOrder(orders:Array[OrderForm], orderID:String): Unit = {
     var foundFlag = false
-    println("Order ID \t Name \t Location \t Status \t Staff ID \t Product ID, Product Name, Product Quantity")
+    println("Order ID \t Name \t Location \t Status \t Staff ID ")
     for (i <- orders ) {
       if (orderID == i.orderID) {
         foundFlag = true
+        var orderCount = 0
+        var text:String = ""
+
         println(i.orderID + "\t" + i.firstName + " " + i.surname + "\t" + i.location + "\t" + i.status + "\t" + i.staffID)
 
         //Loop each order and print
+        while (orderCount != i.orderCount) {
+          text += i.orderList(orderCount).productID + "\t" + i.orderList(orderCount).productName + "\t" + i.orderList(orderCount).quantity + "\n"
+          orderCount +=1
+        }
+        println("Product ID \t Product Name \t Product Quantity")
+        println(text)
       }
     }
     if(!foundFlag)
@@ -191,9 +196,9 @@ object WOTSMain {
 
   //Print all the orders stored in array
   def printOrders(orders:Array[OrderForm]): Unit = {
-    println("Order ID \t Name \t Location \t Status \t Staff ID")
+    println("Order ID \t Customer ID \t Name \t Location \t Status \t Staff ID")
     for (i <- orders ) {
-      println(i.orderID + "\t" + i.firstName + " " + i.surname + "\t" + i.location + "\t" + i.status + "\t" + i.staffID)
+      println(i.orderID + "\t" + i.customerID + "\t" + i.firstName + " " + i.surname + "\t" + i.location + "\t" + i.status + "\t" + i.staffID)
     }
   }
 
@@ -213,9 +218,20 @@ object WOTSMain {
     }
   }
 
-  //Add a new order TODO
+  //Add a new order
   def addOrder(): OrderForm = {
-    //Requires id, name, location, status, staffID
+    def addProducts(productCount:Int): Array[String] = {
+      println("Product " + productCount + " ID")
+      val productID = getUserInput()
+      println("Product " + productCount + " Name")
+      val productName = getUserInput()
+      println("Product " + productCount + " Quantity")
+      val productQuantity = getUserInput()
+
+      val array:Array[String] = Array(productID, productName, productQuantity)
+      array
+    }
+    //Requires id, first name, surname, location, status, staffID + orders
     println("Please enter the details for the new order.")
     println("Order ID")
     val orderID = getUserInput()
@@ -229,10 +245,36 @@ object WOTSMain {
     val location = getUserInput()
     println("Status")
     val status = getUserInput()
-    println("staffID")
+    println("Staff ID (NA for Not Assigned)")
     val staffID = getUserInput()
 
-    new OrderForm(orderID, custID, fname, sname, location, status, staffID)
+    var productCount = 1
+    var orderForm:OrderForm = new OrderForm(orderID, custID, fname, sname, location, status, staffID)
+
+    var productArray:Array[String] = addProducts(productCount)
+    orderForm.addOrder(productArray(0), productArray(1), productArray(2).toInt)
+
+    println("Any more orders to add? (Y/N - Case Sensitive)")
+    var flag = getUserInput()
+    while (flag != "N") {
+      flag match {
+        case "Y" =>
+          //Add another order
+          productCount += 1
+          productArray = addProducts(productCount)
+          orderForm.addOrder(productArray(0), productArray(1), productArray(2).toInt)
+          println("Any more orders to add? (Y/N)")
+          flag = getUserInput()
+        case "N" =>
+        //Finished adding orders
+          println("Finished adding orders")
+        case _ =>
+          println("Invalid Input.")
+      }
+    }
+
+    //Return completed order form
+    orderForm
   }
 
   //Add a new member of staff
@@ -291,6 +333,9 @@ object WOTSMain {
             //Update ID of staff member working on the order
             i.staffID = userInput
             foundFlag = true
+          case OrderFormDetails.ORDER =>
+            //Update an order
+
           case _ =>
             println("Invalid input")
         }
@@ -355,12 +400,12 @@ object WOTSMain {
     scala.io.StdIn.readLine()
   }
 
-  //perform a 'greedy' solution to the TSP, immediately choosing the next closest zone
+  //perform a 'greedy' solution to the TSP, immediately choosing the next closest zone TODO
   def greedySalesmanAlg(): Unit = {
 
   }
 
-  //perform a 'brute force' solution to the TSP, checking every possible combination until the optimal route is found
+  //perform a 'brute force' solution to the TSP, checking every possible combination until the optimal route is found TODO
   def bruteForceSalesmanAlg(): Unit = {
 
   }
@@ -380,7 +425,7 @@ object WOTSMain {
       println("Enter 0 to exit")
       println("1. View all orders")//done
       println("2. Find an order")//done
-      println("3. Update an order")//done
+      println("3. Update an order")
       println("4. Add an order")//done
       println("5. View all staff")//done
       println("6. Find a staff member")//done
@@ -413,6 +458,7 @@ object WOTSMain {
           println("3. Location")
           println("4. Status")
           println("5. Staff ID")
+          println("6. Order")
 
           getUserInput() match {
             case "1" =>
@@ -430,6 +476,9 @@ object WOTSMain {
             case "5" =>
               //Staff ID
               updateOrder(orders, userInput1, OrderFormDetails.STAFF_ID, getUserInput())
+            case "6" =>
+              //Update order
+              updateOrder(orders, userInput1, OrderFormDetails.ORDER, getUserInput())
             case _ =>
               //Invalid
               println("Invalid option.")
