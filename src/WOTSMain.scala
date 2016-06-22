@@ -11,6 +11,7 @@ object FileNames extends Enumeration {
   val ORDER_FILE = "orderForms.csv"
   val STAFF_FILE = "staff.csv"
   val STOCK_FILE = "stock.csv"
+  val ZONE_FILE = "zones.csv"
 }
 
 object OrderFormDetails extends Enumeration {
@@ -29,10 +30,18 @@ object StockDetails extends Enumeration {
 }
 
 object WOTSMain {
+  //global variables
+  var zone:Array[Zone] = Array.empty
+  val zoneDataSource = Source.fromFile(FileNames.ZONE_FILE)
+  var stock:Array[Stock] = Array.empty
+  val orderDataSource = Source.fromFile(FileNames.STOCK_FILE)
+  var staff:Array[Staff] = Array.empty
+  val staffDataSource = Source.fromFile(FileNames.STAFF_FILE)
+  var orders:Array[OrderForm] = Array.empty
+  val orderDataSource = Source.fromFile(FileNames.ORDER_FILE)
+
   //Read in order data from csv and store in Array of Order
-  def readInOrders(): Array[OrderForm] = {
-    var orders:Array[OrderForm] = Array.empty
-    val orderDataSource = Source.fromFile(FileNames.ORDER_FILE)
+  def readInOrders(): Unit = {
     var flag = true
     var newOrderForm:OrderForm = new OrderForm("", "", "", "", "", "", "")
     for (line <- orderDataSource.getLines) { //grab each line in csv
@@ -64,32 +73,32 @@ object WOTSMain {
       //append each order to array of orders
       orders = orders :+ newOrderForm
     }
-    orderDataSource.close
-    orders
   }
 
   //Read in staff data from csv and store in Array of Staff
-  def readInStaff(): Array[Staff] = {
-    var staff:Array[Staff] = Array.empty
+  def readInStaff(): Unit = {
     val orderDataSource = Source.fromFile(FileNames.STAFF_FILE)
     for (line <- orderDataSource.getLines) {
       val cols = line.split(",").map(_.trim) // Use comma to split each data value and trim excess spaces
       staff = staff :+ new Staff(cols(0), cols(1), cols(2)) //append each member of staff to array of staff
     }
-    orderDataSource.close
-    staff
   }
 
   //Read in stock data from csv and store in Array of Stock
-  def readInStock(): Array[Stock] = {
-    var stock:Array[Stock] = Array.empty
-    val orderDataSource = Source.fromFile(FileNames.STOCK_FILE)
+  def readInStock(): Unit = {
     for (line <- orderDataSource.getLines) {
       val cols = line.split(",").map(_.trim) // Use comma to split each data value and trim excess spaces
       stock = stock :+ new Stock(cols(0), cols(1), cols(2), cols(3)) //append stock info
     }
-    orderDataSource.close
-    stock
+  }
+
+  //read in the zone data
+  def readInZone(): Unit = {
+    for (line <- zoneDataSource.getLines) {
+      val cols = line.split(",").map(_.trim)
+      zone = zone :+ new Zone(cols(0), cols(1).toDouble, cols(2).toDouble, cols(3).toDouble, cols(4).toDouble,
+        cols(5).toDouble, cols(6).toDouble, cols(7).toDouble, cols(8).toDouble, cols(9).toDouble, cols(10).toDouble)
+    }
   }
 
   //Write all order data to file
@@ -308,7 +317,7 @@ object WOTSMain {
   }
 
   //Updates a specific order, found with orderID TODO
-  def updateOrder(orders:Array[OrderForm], orderID:String, updateType:OrderFormDetails.Value, userInput:String): Unit = {
+  def updateOrder(orderID:String, updateType:OrderFormDetails.Value, userInput:String): Unit = {
     var foundFlag = false
     for(i <- orders ) {
       if (orderID == i.orderID) {
@@ -346,7 +355,7 @@ object WOTSMain {
   }
 
   //Updates a specific staff members details, found with staffID
-  def updateStaff(staff:Array[Staff], staffID:String, updateType:StaffDetails.Value, userInput:String): Unit = {
+  def updateStaff(staffID:String, updateType:StaffDetails.Value, userInput:String): Unit = {
     var foundFlag = false
     for(i <- staff ) {
       if (staffID == i.staffID) {
@@ -369,7 +378,7 @@ object WOTSMain {
   }
 
   //Updates a specific stock, found with stockID
-  def updateStock(stock:Array[Stock], stockID:String, updateType:StockDetails.Value, userInput:String): Unit = {
+  def updateStock(stockID:String, updateType:StockDetails.Value, userInput:String): Unit = {
     var foundFlag = false
     for(i <- stock ) {
       if (stockID == i.stockID) {
@@ -415,26 +424,27 @@ object WOTSMain {
     var userInput1 = "0"
 
     //Read in and store data
-    var orders:Array[OrderForm] = readInOrders()
-    var staff:Array[Staff] = readInStaff()
-    var stock:Array[Stock] = readInStock()
+    readInOrders()
+    readInStaff()
+    readInStock()
+    readInZone()
 
     while(menuFlag){
       println("\nWelcome to the Warehouse Order Tracking System.")
       println("To navigate, simply enter the number of the service you wish to access.")
       println("Enter 0 to exit")
-      println("1. View all orders")//done
-      println("2. Find an order")//done
+      println("1. View all orders")
+      println("2. Find an order")
       println("3. Update an order")
-      println("4. Add an order")//done
-      println("5. View all staff")//done
-      println("6. Find a staff member")//done
-      println("7. Update staff details")//done
-      println("8. Add staff")//done
-      println("9. View all stock")//done
-      println("10. Find specific stock")//done
-      println("11. Update stock")//done
-      println("12. Add stock")//done
+      println("4. Add an order")
+      println("5. View all staff")
+      println("6. Find a staff member")
+      println("7. Update staff details")
+      println("8. Add staff")
+      println("9. View all stock")
+      println("10. Find specific stock")
+      println("11. Update stock")
+      println("12. Add stock")
 
       getUserInput() match {
         case "1" =>
@@ -445,7 +455,7 @@ object WOTSMain {
           //Find an order
           println("What is the order ID? ")
           printSingleOrder(orders, getUserInput())
-        case "3" => //TODO
+        case "3" =>
           //Update an order
           println("What is the order ID? ")
           userInput1 = getUserInput()
@@ -570,5 +580,10 @@ object WOTSMain {
           println("Invalid input")
       }
     }
+    //close data files
+    orderDataSource.close()
+    zoneDataSource.close()
+    staffDataSource.close()
+    orderDataSource.close()
   }
 }
