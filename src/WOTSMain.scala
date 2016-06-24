@@ -37,13 +37,13 @@ object WOTSMain {
   val orderDataSource = Source.fromFile(FileNames.STOCK_FILE)
   var staff:Array[Staff] = Array.empty
   val staffDataSource = Source.fromFile(FileNames.STAFF_FILE)
-  var orders:Array[OrderForm] = Array.empty
+  var orders:Array[Order] = Array.empty
   val orderDataSource = Source.fromFile(FileNames.ORDER_FILE)
 
   //Read in order data from csv and store in Array of Order
   def readInOrders(): Unit = {
     var flag = true
-    var newOrderForm:OrderForm = new OrderForm("", "", "", "", "", "", "")
+    var newOrderForm:Order = new Order("", "", "", "", "", "", "")
     for (line <- orderDataSource.getLines) { //grab each line in csv
       //col(7) = order 1 id, col(8) = order 1 name, col(9) = order 1 quantity
       val cols = line.split(",").map(_.trim) // Use comma to split each data value and trim excess spaces
@@ -54,7 +54,7 @@ object WOTSMain {
       flag = true
 
       //create a new Order Form
-      newOrderForm = new OrderForm(cols(0), cols(1), cols(2), cols(3), cols(4), cols(5),
+      newOrderForm = new Order(cols(0), cols(1), cols(2), cols(3), cols(4), cols(5),
         cols(6))
 
       while(flag) { //while the orders have not all been added
@@ -102,7 +102,7 @@ object WOTSMain {
   }
 
   //Write all order data to file
-  def writeAllOrders(orders:Array[OrderForm]): Unit = {
+  def writeAllOrders(orders:Array[Order]): Unit = {
     val file = new File(FileNames.ORDER_FILE)
     val bw = new BufferedWriter(new FileWriter(file))
     var text = ""
@@ -151,7 +151,7 @@ object WOTSMain {
   }
 
   //Print a single order
-  def printSingleOrder(orders:Array[OrderForm], orderID:String): Unit = {
+  def printSingleOrder(orders:Array[Order], orderID:String): Unit = {
     var foundFlag = false
     println("Order ID \t Name \t Location \t Status \t Staff ID ")
     for (i <- orders ) {
@@ -204,7 +204,7 @@ object WOTSMain {
   }
 
   //Print all the orders stored in array
-  def printOrders(orders:Array[OrderForm]): Unit = {
+  def printOrders(orders:Array[Order]): Unit = {
     println("Order ID \t Customer ID \t Name \t Location \t Status \t Staff ID")
     for (i <- orders ) {
       println(i.orderID + "\t" + i.customerID + "\t" + i.firstName + " " + i.surname + "\t" + i.location + "\t" + i.status + "\t" + i.staffID)
@@ -228,7 +228,7 @@ object WOTSMain {
   }
 
   //Add a new order
-  def addOrder(): OrderForm = {
+  def addOrder(): Order = {
     def addProducts(productCount:Int): Array[String] = {
       println("Product " + productCount + " ID")
       val productID = getUserInput()
@@ -258,7 +258,7 @@ object WOTSMain {
     val staffID = getUserInput()
 
     var productCount = 1
-    var orderForm:OrderForm = new OrderForm(orderID, custID, fname, sname, location, status, staffID)
+    var orderForm:Order = new Order(orderID, custID, fname, sname, location, status, staffID)
 
     var productArray:Array[String] = addProducts(productCount)
     orderForm.addOrder(productArray(0), productArray(1), productArray(2).toInt)
