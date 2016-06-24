@@ -11,6 +11,7 @@ object FileNames extends Enumeration {
   val ORDER_FILE = "orderForms.csv"
   val STAFF_FILE = "staff.csv"
   val STOCK_FILE = "stock.csv"
+  val ZONE_FILE = "zones.csv"
 }
 
 object OrderFormDetails extends Enumeration {
@@ -29,6 +30,10 @@ object StockDetails extends Enumeration {
 }
 
 object WOTSMain {
+  //global variables
+  var zone:Array[Zone] = Array.empty
+  val zoneDataSource = Source.fromFile(FileNames.ZONE_FILE)
+
   //Read in order data from csv and store in Array of Order
   def readInOrders(): Array[OrderForm] = {
     var orders:Array[OrderForm] = Array.empty
@@ -90,6 +95,15 @@ object WOTSMain {
     }
     orderDataSource.close
     stock
+  }
+
+  //Read in zone data from csv and store in Array of Zone
+  def readInZones(): Unit = {
+    for (line <- zoneDataSource.getLines) {
+      val cols = line.split(",").map(_.trim) // Use comma to split each data value and trim excess spaces
+      zone = zone :+ new Zone(cols(0), cols(1).toDouble, cols(2).toDouble, cols(3).toDouble, cols(4).toDouble,
+        cols(5).toDouble, cols(6).toDouble, cols(7).toDouble, cols(8).toDouble, cols(9).toDouble, cols(10).toDouble) //append stock info
+    }
   }
 
   //Write all order data to file
@@ -400,8 +414,65 @@ object WOTSMain {
     scala.io.StdIn.readLine()
   }
 
+  //Take the name of a zone and return its index
+  def ZoneIndex(zoneName:String) : Int = {
+    zoneName match {
+      case "Zone A" => 0
+      case "Zone B" => 1
+      case "Zone C" => 2
+      case "Zone D" => 3
+      case "Zone E" => 4
+      case "Zone F" => 5
+      case "Zone G" => 6
+      case "Zone H" => 7
+      case "Zone I" => 8
+      case "Zone J" => 9
+      case _ => 99
+    }
+  }
+
+  //Take the index of a zone and return its name
+  def ZoneName(zoneIndex:Int) : String = {
+    zoneIndex match {
+      case 0 => "Zone A"
+      case 1 => "Zone B"
+      case 2 => "Zone C"
+      case 3 => "Zone D"
+      case 4 => "Zone E"
+      case 5 => "Zone F"
+      case 6 => "Zone G"
+      case 7 => "Zone H"
+      case 8 => "Zone I"
+      case 9 => "Zone J"
+      case _ => "Error"
+    }
+  }
+
   //perform a 'greedy' solution to the TSP, immediately choosing the next closest zone TODO
   def greedySalesmanAlg(): Unit = {
+    //Exclusion array for visited zones
+    var exclusionIndexes:Array[Int] = Array.empty
+
+    //store total distance travelled
+    var distance = 0.0
+
+    //temp variables for storing zone index
+    var index = 0
+    var zoneName:String = ""
+
+    //List of the names of the zones that are visited, in order
+    var visitedZones:Array[String] = Array.empty
+
+    //exclude zone A as it is the start location
+    exclusionIndexes = exclusionIndexes :+ ZoneIndex("Zone A")
+
+    //Starting at zone A, grab all distances to A
+    val distancesToZones:Array[Double] = Array(2.0, 2.0,3.2)
+
+    //Loop through each distance to find the closest zone
+    for ( i <- distancesToZones ) {
+
+    }
 
   }
 
@@ -418,6 +489,7 @@ object WOTSMain {
     var orders:Array[OrderForm] = readInOrders()
     var staff:Array[Staff] = readInStaff()
     var stock:Array[Stock] = readInStock()
+    readInZones()
 
     while(menuFlag){
       println("\nWelcome to the Warehouse Order Tracking System.")
@@ -570,5 +642,6 @@ object WOTSMain {
           println("Invalid input")
       }
     }
+    zoneDataSource.close
   }
 }
