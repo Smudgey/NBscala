@@ -1,10 +1,11 @@
 /**
   * Created by Luke on 15/06/2016.
   */
-case class OrderForm(orderID:String, customerID:String, firstName:String, surName:String, location:String, status:String, staffID:String){}
+case class Order(orderID:String, customerID:String, firstName:String, surName:String, location:String, status:String, staffID:String){}
 
-object OrderForm {
-  var orders = Set(Product("01", "01", "tom", "Tommy", "Bristol", "Active", "01"))
+object Order {
+  var orders = ""
+  //Set(OrderLine("01", "01", "tom", "Tommy", "Bristol", "Active", "01"))
   //possibly Seq instead
   def findByOrderId(orderId:String) = orderForms.find(_.orderID == orderId)
 
@@ -19,4 +20,4 @@ object OrderForm {
   }
 }
 
-Product.findByOrderId(getUserInput())
+//Product.findByOrderId(getUserInput())
