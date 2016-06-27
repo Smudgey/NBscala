@@ -34,6 +34,7 @@ object WOTSMain {
   var zone:Array[Zone] = Array.empty
   val zoneDataSource = Source.fromFile(FileNames.ZONE_FILE)
 
+  /* ALL READ AND WRITE CAN BE DONE IN APPROPRIATE CLASS*/
   //Read in order data from csv and store in Array of Order
   def readInOrders(): Array[OrderForm] = {
     var orders:Array[OrderForm] = Array.empty
@@ -155,6 +156,7 @@ object WOTSMain {
     bw.close()
   }
 
+  /* Can be moved to appropriate classes*/
   //Print a single order
   def printSingleOrder(orders:Array[OrderForm], orderID:String): Unit = {
     var foundFlag = false
@@ -448,6 +450,7 @@ object WOTSMain {
     }
   }
 
+  /* Can make good use of recursion */
   //perform a 'greedy' solution to the TSP, immediately choosing the next closest zone TODO
   def greedySalesmanAlg(): Unit = {
     //Exclusion array for visited zones
